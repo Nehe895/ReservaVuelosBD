@@ -1,0 +1,49 @@
+///GET
+GET http://localhost:3000/pasajeros
+###
+GET http://localhost:3000/boletos
+###
+GET http://localhost:3000/vuelos
+###
+GET http://localhost:3000/aerolineas
+###
+GET http://localhost:3000/destinos
+###
+GET http://localhost:3000/origenes
+###
+GET http://localhost:3000/rutasDestino
+###
+GET http://localhost:3000/pasajerosA
+
+///POST
+###
+POST http://localhost:3000/pasajero
+Content-Type: application/json
+
+{
+    "pasajero_id":"2",
+    "nombre":"Paco",       
+    "apellido":"Acellido",
+    "edad":48,         
+    "genero":"M",
+    "nacionalidad":"Peruano",
+    "telefono":"78457646",
+    "correo":"pacoacellido@gmail.com"
+}
+
+###
+PUT http://localhost:3000/pasajero/2
+Content-Type: application/json
+
+{
+    "nombre":"Mateo",       
+    "apellido":"Acellido",
+    "edad":53,         
+    "genero":"M",       
+    "nacionalidad":"Peruano",
+    "telefono":"78457646",
+    "correo":"paco@gmail.com"
+}
+
+###
+DELETE  http://localhost:3000/pasajero/2

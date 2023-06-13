@@ -1,0 +1,95 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model aerolineas {
+  id_aerolinea Int      @id(map: "aerolineas_pk") @default(autoincrement())
+  nombre       String?  @db.VarChar(50)
+  pais         String?  @db.VarChar(25)
+  codigo_iata  String?  @db.VarChar(3)
+  boletos      boletos?
+}
+
+model boletos {
+  boleto_id               Int                   @id(map: "boletos_pk") @default(autoincrement())
+  clase                   String?               @db.VarChar(10)
+  precio                  Int?
+  pasajeros_pasajero_id   String                @unique(map: "boletos__idxv3") @db.VarChar(10)
+  vuelos_vuelo_id         Int
+  aerolineas_id_aerolinea Int                   @unique(map: "boletos__idxv4")
+  aerolineas              aerolineas            @relation(fields: [aerolineas_id_aerolinea], references: [id_aerolinea], onDelete: NoAction, onUpdate: NoAction, map: "boletos_aerolineas_fk")
+  pasajeros               pasajeros             @relation(fields: [pasajeros_pasajero_id], references: [pasajero_id], onDelete: NoAction, onUpdate: NoAction, map: "boletos_pasajeros_fk")
+  vuelos                  vuelos                @relation(fields: [vuelos_vuelo_id], references: [vuelo_id], onDelete: NoAction, onUpdate: NoAction, map: "boletos_vuelos_fk")
+  pasajeros_atrasados     pasajeros_atrasados[]
+
+  @@unique([pasajeros_pasajero_id, aerolineas_id_aerolinea, vuelos_vuelo_id], map: "boletos__idx")
+}
+
+model checkin {
+  id_checkin   Int       @id(map: "checkin_pk") @default(autoincrement())
+  hora_checkin DateTime? @db.Date
+  estado       String?   @db.VarChar(10)
+}
+
+model destinos {
+  destino_id       Int            @id(map: "destinos_pk") @default(autoincrement())
+  nombre           String?        @db.VarChar(25)
+  longitud_destino Decimal?       @db.Decimal(9, 6)
+  latitud_destino  Decimal?       @db.Decimal(9, 6)
+  ruta_destino     ruta_destino[]
+}
+
+model origen {
+  origen_id       Int            @id(map: "origen_pk") @default(autoincrement())
+  nombre          String?        @db.VarChar(20)
+  longitud_origen Decimal?       @db.Decimal(9, 6)
+  latitud_origen  Decimal?       @db.Decimal(9, 6)
+  ruta_destino    ruta_destino[]
+}
+
+model pasajeros {
+  pasajero_id  String   @id(map: "pasajeros_pk") @db.VarChar(10)
+  nombre       String?  @db.VarChar(50)
+  apellido     String?  @db.VarChar(50)
+  edad         Int?
+  genero       String?  @db.VarChar(1)
+  nacionalidad String?  @db.VarChar(20)
+  telefono     String?  @db.VarChar(15)
+  correo       String?  @db.VarChar(60)
+  boletos      boletos?
+}
+
+model pasajeros_atrasados {
+  pasajero_a_id     Int       @id(map: "pasajeros_atrasados_pk") @default(autoincrement())
+  motivo            String?
+  hora_registro     DateTime? @db.Date
+  boletos_boleto_id Int
+  boletos           boletos   @relation(fields: [boletos_boleto_id], references: [boleto_id], onDelete: NoAction, onUpdate: NoAction, map: "pasajeros_atrasados_boletos_fk")
+}
+
+model ruta_destino {
+  r_destino_id        Int      @id(map: "ruta_destino_pk")
+  km_recorido         Decimal? @db.Decimal(9, 2)
+  pais                String?  @db.VarChar(20)
+  origen_origen_id    Int
+  destinos_destino_id Int
+  destino_id          Int
+  destinos            destinos @relation(fields: [destinos_destino_id], references: [destino_id], onDelete: NoAction, onUpdate: NoAction, map: "ruta_destino_destinos_fk")
+  origen              origen   @relation(fields: [origen_origen_id], references: [origen_id], onDelete: NoAction, onUpdate: NoAction, map: "ruta_destino_origen_fk")
+  vuelos              vuelos?
+}
+
+model vuelos {
+  vuelo_id                  Int          @id(map: "vuelos_pk")
+  codigo                    String?      @db.VarChar(13)
+  hora_salida               DateTime?    @db.Timestamp(6)
+  hora_llegada              DateTime?    @db.Timestamp(6)
+  ruta_destino_r_destino_id Int          @unique(map: "vuelos__idx")
+  boletos                   boletos[]
+  ruta_destino              ruta_destino @relation(fields: [ruta_destino_r_destino_id], references: [r_destino_id], onDelete: NoAction, onUpdate: NoAction, map: "vuelos_ruta_destino_fk")
+}

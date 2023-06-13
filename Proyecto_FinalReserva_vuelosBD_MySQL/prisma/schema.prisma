@@ -1,0 +1,104 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model aerolineas {
+  id_aerolinea Int      @id
+  nombre       String?  @db.VarChar(25)
+  pais         String?  @db.VarChar(20)
+  codigo_iata  String?  @db.VarChar(3)
+  boletos      boletos?
+}
+
+model boletos {
+  boleto_id               Int                   @id
+  clase                   String?               @db.VarChar(10)
+  precio                  Int?
+  pasajeros_pasajero_id   String                @unique(map: "boletos__idxv3") @db.VarChar(10)
+  vuelos_vuelo_id         Int
+  aerolineas_id_aerolinea Int                   @unique(map: "boletos__idxv4")
+  checkin_id_checkin      Int                   @unique(map: "boletos__idxv5")
+  aerolineas              aerolineas            @relation(fields: [aerolineas_id_aerolinea], references: [id_aerolinea], onUpdate: Restrict, map: "boletos_ibfk_1")
+  checkin                 checkin               @relation(fields: [checkin_id_checkin], references: [id_checkin], onUpdate: Restrict, map: "boletos_ibfk_2")
+  pasajeros               pasajeros             @relation(fields: [pasajeros_pasajero_id], references: [pasajero_id], onUpdate: Restrict, map: "boletos_ibfk_3")
+  vuelos                  vuelos                @relation(fields: [vuelos_vuelo_id], references: [vuelo_id], onUpdate: Restrict, map: "boletos_ibfk_4")
+  pasajeros_atrasados     pasajeros_atrasados[]
+
+  @@unique([pasajeros_pasajero_id, aerolineas_id_aerolinea, checkin_id_checkin, vuelos_vuelo_id], map: "boletos__idx")
+  @@index([vuelos_vuelo_id], map: "vuelos_vuelo_id")
+}
+
+model checkin {
+  id_checkin   Int       @id
+  hora_checkin DateTime? @db.Date
+  estado       String?   @db.VarChar(10)
+  boletos      boletos?
+}
+
+model destinos {
+  destino_id       Int            @id
+  nombre           String?        @db.VarChar(25)
+  longitud_destino Decimal?       @db.Decimal(5, 5)
+  latitud_destino  Decimal?       @db.Decimal(5, 5)
+  ruta_destino     ruta_destino[]
+}
+
+model origen {
+  origen_id       Int            @id
+  nombre          String?        @db.VarChar(20)
+  longitud_origen Decimal?       @db.Decimal(5, 5)
+  latitud_origen  Decimal?       @db.Decimal(5, 5)
+  ruta_destino    ruta_destino[]
+}
+
+model pasajeros {
+  pasajero_id  String   @id @db.VarChar(10)
+  nombre       String?  @db.VarChar(50)
+  apellido     String?  @db.VarChar(50)
+  edad         Int?
+  genero       String?  @db.VarChar(1)
+  nacionalidad String?  @db.VarChar(20)
+  telefono     String?  @db.VarChar(15)
+  correo       String?  @db.VarChar(60)
+  boletos      boletos?
+}
+
+model pasajeros_atrasados {
+  pasajero_a_id     Int       @id
+  motivo            String?   @db.Text
+  hora_registro     DateTime? @db.Date
+  boletos_boleto_id Int
+  boletos           boletos   @relation(fields: [boletos_boleto_id], references: [boleto_id], onUpdate: Restrict, map: "pasajeros_atrasados_ibfk_1")
+
+  @@index([boletos_boleto_id], map: "boletos_boleto_id")
+}
+
+model ruta_destino {
+  r_destino_id        Int      @id
+  km_recorido         Decimal? @db.Decimal(7, 2)
+  pais                String?  @db.VarChar(20)
+  origen_origen_id    Int
+  destinos_destino_id Int
+  destino_id          Int
+  destinos            destinos @relation(fields: [destinos_destino_id], references: [destino_id], onUpdate: Restrict, map: "ruta_destino_ibfk_1")
+  origen              origen   @relation(fields: [origen_origen_id], references: [origen_id], onUpdate: Restrict, map: "ruta_destino_ibfk_2")
+  vuelos              vuelos?
+
+  @@index([destinos_destino_id], map: "destinos_destino_id")
+  @@index([origen_origen_id], map: "origen_origen_id")
+}
+
+model vuelos {
+  vuelo_id                  Int          @id
+  codigo                    String?      @db.VarChar(13)
+  hora_salida               DateTime     @default(now()) @db.Timestamp(0)
+  hora_llegada              DateTime?    @db.DateTime(0)
+  ruta_destino_r_destino_id Int          @unique(map: "vuelos__idx")
+  boletos                   boletos[]
+  ruta_destino              ruta_destino @relation(fields: [ruta_destino_r_destino_id], references: [r_destino_id], onUpdate: Restrict, map: "vuelos_ibfk_1")
+}
